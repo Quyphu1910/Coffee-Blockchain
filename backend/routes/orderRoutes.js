@@ -2,11 +2,13 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
-const authMiddleware = require('../middleware/authMiddleware');
+const jwtAuthMiddleware = require('../middleware/jwtAuthMiddleware');
+
+router.use(jwtAuthMiddleware)
 
 /**
  * @openapi
- * /api/orders/confirm:
+ * /api/v1/orders/confirm:
  *   post:
  *     tags:
  *       - Orders
@@ -85,11 +87,10 @@ const authMiddleware = require('../middleware/authMiddleware');
  */
 router.post('/confirm', orderController.confirmOrder); // No auth middleware for /confirm
 
-router.use(authMiddleware); // Apply auth middleware to the routes below
 
 /**
  * @openapi
- * /api/orders/history:
+ * /api/v1/orders/history:
  *   get:
  *     tags:
  *       - Orders
@@ -141,7 +142,7 @@ router.get('/history', orderController.getOrderHistoryForUser);
 
 /**
  * @openapi
- * /api/orders/{orderId}:
+ * /api/v1/orders/{orderId}:
  *   get:
  *     tags:
  *       - Orders

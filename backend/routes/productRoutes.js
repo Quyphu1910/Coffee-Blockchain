@@ -2,24 +2,41 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
-const authMiddleware = require('../middleware/authMiddleware');
+const multer = require('multer');
+const jwtAuthMiddleware = require('../middleware/jwtAuthMiddleware');
 
+// Cấu hình multer
+const upload = multer({
+    limits: {
+        fileSize: 5 * 1024 * 1024, // giới hạn 5MB
+    },
+    fileFilter: (req, file, cb) => {
+        console.log('Received file:', file);
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Not an image! Please upload an image.'), false);
+        }
+    }
+});
+
+router.use(jwtAuthMiddleware)
 /**
  * @openapi
- * /api/products:
+ * /api/v1/products:
  *   get:
  *     tags:
  *       - Products
  *     summary: Get a list of all available products
  *     responses:
  *       200:
- *         description: Success response - array of product objects
+ *         description: Success - returns an array of product objects
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 type: object # You can define a more detailed schema for Product here if needed
+ *                 type: object # Define Product schema if needed in Swagger
  *                 description: Product object
  *       500:
  *         description: Server error
@@ -36,7 +53,7 @@ router.get('/', productController.getAllProducts);
 
 /**
  * @openapi
- * /api/products/{productId}:
+ * /api/v1/products/{productId}:
  *   get:
  *     tags:
  *       - Products
@@ -45,16 +62,16 @@ router.get('/', productController.getAllProducts);
  *       - in: path
  *         name: productId
  *         required: true
- *         description: ID of the product to fetch
+ *         description: ID of the product to retrieve
  *         schema:
  *           type: number
  *     responses:
  *       200:
- *         description: Success response - product object
+ *         description: Success - returns the requested product object
  *         content:
  *           application/json:
  *             schema:
- *               type: object # You can define a more detailed schema for Product here
+ *               type: object # Define Product schema if needed in Swagger
  *               description: Product object
  *       404:
  *         description: Not Found - Product not found or unavailable
@@ -79,27 +96,22 @@ router.get('/', productController.getAllProducts);
  */
 router.get('/:productId', productController.getProductById);
 
-router.use(authMiddleware); // Apply admin middleware to the routes below
 
 /**
  * @openapi
- * /api/products:
+ * /api/v1/products:
  *   post:
  *     tags:
  *       - Products (Admin)
  *     summary: Create a new product (Admin only)
  *     security:
- *       - JWTAuth: [] # Assuming you have defined JWTAuth security scheme
+ *       - JWTAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
- *             required:
- *               - name
- *               - price
- *               - imageBase64
  *             properties:
  *               name:
  *                 type: string
@@ -121,24 +133,31 @@ router.use(authMiddleware); // Apply admin middleware to the routes below
  *                 description: Array of tags for the product
  *               stockQuantity:
  *                 type: number
- *                 description: Initial stock quantity
+ *                 description: Stock quantity
  *               discountPercentage:
  *                 type: number
  *                 format: float
  *                 description: Discount percentage (0-100)
- *               imageBase64:
+ *               image:
  *                 type: string
- *                 description: Base64 encoded image of the product
+ *                 format: binary
+ *                 description: Product image file (JPEG, PNG, ...)
  *     responses:
  *       201:
- *         description: Success response - newly created product object
+ *         description: Success - product created successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: object # You can define a more detailed schema for Product here
- *               description: Newly created product object
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product created successfully!
+ *                 product:
+ *                   type: object # Define Product schema if needed
+ *                   description: Newly created product object
  *       400:
- *         description: Bad Request - required fields missing or invalid
+ *         description: Bad Request - invalid input data
  *         content:
  *           application/json:
  *             schema:
@@ -168,17 +187,17 @@ router.use(authMiddleware); // Apply admin middleware to the routes below
  *                   type: string
  *                   example: Failed to create product.
  */
-router.post('/', productController.createProduct);
+router.post('/', upload.single('image'), productController.createProduct); 
 
 /**
  * @openapi
- * /api/products/{productId}:
+ * /api/v1/products/{productId}:
  *   put:
  *     tags:
  *       - Products (Admin)
  *     summary: Update an existing product (Admin only)
  *     security:
- *       - JWTAuth: [] # Assuming JWTAuth security scheme is defined
+ *       - JWTAuth: []
  *     parameters:
  *       - in: path
  *         name: productId
@@ -189,7 +208,7 @@ router.post('/', productController.createProduct);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -217,17 +236,18 @@ router.post('/', productController.createProduct);
  *               discountPercentage:
  *                 type: number
  *                 format: float
- *                 description: Updated discount percentage (0-100)
- *               imageBase64:
+ *                 description: Discount percentage (0-100)
+ *               image:
  *                 type: string
- *                 description: Base64 encoded image for updating product image (optional)
+ *                 format: binary
+ *                 description: Product image file (JPEG, PNG, ...) - Optional, only include to update image
  *     responses:
  *       200:
- *         description: Success response - updated product object
+ *         description: Success - product updated successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: object # You can define a more detailed schema for Product here
+ *               type: object
  *               description: Updated product object
  *       400:
  *         description: Bad Request - invalid input data
@@ -270,17 +290,17 @@ router.post('/', productController.createProduct);
  *                   type: string
  *                   example: Failed to update product.
  */
-router.put('/:productId', productController.updateProduct);
+router.put('/:productId', upload.single('image'), productController.updateProduct);
 
 /**
  * @openapi
- * /api/products/{productId}:
+ * /api/v1/products/{productId}:
  *   delete:
  *     tags:
  *       - Products (Admin)
  *     summary: Delete a product (Admin only - soft delete)
  *     security:
- *       - JWTAuth: [] # Assuming JWTAuth security scheme is defined
+ *       - JWTAuth: []
  *     parameters:
  *       - in: path
  *         name: productId
@@ -290,7 +310,7 @@ router.put('/:productId', productController.updateProduct);
  *           type: number
  *     responses:
  *       200:
- *         description: Success response - product deleted message
+ *         description: Success - product deleted successfully (soft delete)
  *         content:
  *           application/json:
  *             schema:

@@ -8,7 +8,7 @@ router.use(jwtAuthMiddleware) // Apply auth middleware to protect cart routes
 
 /**
  * @openapi
- * /api/cart:
+ * /api/v1/cart:
  *   get:
  *     tags:
  *       - Cart
@@ -48,7 +48,7 @@ router.get('/', cartController.getCart);
 
 /**
  * @openapi
- * /api/cart/add:
+ * /api/v1/cart/add:
  *   post:
  *     tags:
  *       - Cart
@@ -123,7 +123,7 @@ router.post('/add', cartController.addItemToCart);
 
 /**
  * @openapi
- * /api/cart/remove/{productId}:
+ * /api/v1/cart/remove/{productId}:
  *   delete:
  *     tags:
  *       - Cart
@@ -180,7 +180,7 @@ router.delete('/remove/:productId', cartController.removeItemFromCart);
 
 /**
  * @openapi
- * /api/cart/clear:
+ * /api/v1/cart/clear:
  *   delete:
  *     tags:
  *       - Cart
