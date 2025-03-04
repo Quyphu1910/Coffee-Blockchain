@@ -17,7 +17,60 @@ const generateRefreshToken = (userId) => {
     });
 };
 
-exports.registerUser = async (req, res) => { /* ... (Hàm registerUser - giữ nguyên logic đăng ký email/password) ... */ };
+exports.registerUser = async (req, res) => {
+    try {
+        const { username, email, password, address } = req.body; // **Lấy thêm trường 'address' từ request body**
+        console.log("Bắt đầu đăng ký user:", { username, email, address }); // Log đầu vào (thêm address)
+
+        // Validate input data - Thêm validation cho address
+        if (!username || !email || !password || !address) { // **Thêm address vào danh sách required fields**
+            console.log("Lỗi: Thiếu username, email, password hoặc address"); // Log lỗi validation (thêm address)
+            return res.status(400).json({ message: "Username, email, password, and address are required for registration." }); // **Cập nhật thông báo lỗi**
+        }
+
+        // Kiểm tra username, email, và address đã tồn tại
+        const existingUserUsername = await User.findOne({ username: username });
+        if (existingUserUsername) {
+            console.log("Lỗi: Username đã tồn tại:", username);
+            return res.status(409).json({ message: "Username already exists." });
+        }
+        const existingUserEmail = await User.findOne({ email: email });
+        if (existingUserEmail) {
+            console.log("Lỗi: Email đã tồn tại:", email);
+            return res.status(409).json({ message: "Email already exists." });
+        }
+        const existingUserAddress = await User.findOne({ address: address.toLowerCase() }); // **Kiểm tra address đã tồn tại**
+        if (existingUserAddress) {
+            console.log("Lỗi: Address đã tồn tại:", address); // Log lỗi address tồn tại
+            return res.status(409).json({ message: "Address already exists." }); // **Lỗi nếu address đã được đăng ký**
+        }
+
+
+        console.log("Tạo newUser object:", { username, email, address }); // Log (thêm address)
+        const newUser = new User({
+            username: username,
+            email: email.toLowerCase(),
+            password: password,
+            address: address.toLowerCase(), // **Lưu address vào document User**
+        });
+
+        console.log("Lưu newUser vào database...");
+        await newUser.save();
+        console.log("Lưu newUser thành công!");
+
+        res.status(201).json({ message: "User registered successfully!", user: { _id: newUser._id, username: newUser.username, email: newUser.email, address: newUser.address } }); // **Trả về address trong response**
+        console.log("Trả về response 201");
+
+    } catch (error) {
+        console.error("Lỗi trong hàm registerUser:", error);
+        if (error.name === 'ValidationError') {
+            console.log("Lỗi validation Mongoose:", error.errors);
+            return res.status(400).json({ message: "Validation error during registration.", errors: error.errors });
+        }
+        res.status(500).json({ message: "Failed to register user.", error: error.message });
+        console.log("Trả về response 500");
+    }
+};
 
 exports.loginUser = async (req, res) => {
     try {

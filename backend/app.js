@@ -22,9 +22,6 @@ app.use(cors());
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true })); 
 
-// KHÔNG sử dụng multer ở đây
-// const upload = multer(); 
-// app.use(upload.single('image'));
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/v1/auth', authRoutes); 
@@ -32,6 +29,7 @@ app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/cart', cartRoutes); 
 app.use('/api/v1/orders', orderRoutes); 
 app.use('/api/v1/payment', paymentRoutes);
+app.use('/api/v1/coffee-shops', coffeeShopRoutes);
 
 app.get('/', (req, res) => {
     res.send('Welcome to the API');

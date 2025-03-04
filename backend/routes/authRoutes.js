@@ -10,7 +10,7 @@ const jwtAuthMiddleware = require('../middleware/jwtAuthMiddleware'); // Import 
  *   post:
  *     tags:
  *       - Authentication
- *     summary: Register a new user with email, username, and password
+ *     summary: Register a new user with email, username, password, and MetaMask address
  *     requestBody:
  *       required: true
  *       content:
@@ -21,6 +21,7 @@ const jwtAuthMiddleware = require('../middleware/jwtAuthMiddleware'); // Import 
  *               - username
  *               - email
  *               - password
+ *               - address  # **Thêm 'address' vào danh sách required**
  *             properties:
  *               username:
  *                 type: string
@@ -33,6 +34,9 @@ const jwtAuthMiddleware = require('../middleware/jwtAuthMiddleware'); // Import 
  *                 type: string
  *                 format: password
  *                 description: Password for registration (minimum 6 characters)
+ *               address:  # **Thêm trường 'address' vào properties**
+ *                 type: string
+ *                 description: MetaMask address of the user
  *     responses:
  *       201:
  *         description: Success response when user is registered
@@ -46,13 +50,37 @@ const jwtAuthMiddleware = require('../middleware/jwtAuthMiddleware'); // Import 
  *                   example: User registered successfully!
  *                 user:
  *                   type: object
- *                   description: Newly registered user object (safe fields)
+ *                   description: Newly registered user object (safe fields, including address) # **Cập nhật description**
  *       400:
  *         description: Bad request (e.g., missing fields, invalid email format)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Username, email, password, and address are required for registration. # **Cập nhật thông báo lỗi**
  *       409:
- *         description: Conflict - Username or email already exists
+ *         description: Conflict - Username, email, or address already exists # **Cập nhật thông báo lỗi**
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Username already exists.
  *       500:
  *         description: Server error during registration
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Failed to register user.
  */
 router.post('/register', authController.registerUser);
 

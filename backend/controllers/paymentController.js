@@ -4,7 +4,7 @@ const User = require('../models/User');
 const Cart = require('../models/Cart');
 const Web3 = require('web3');
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.GANACHE_PROVIDER_URL));
-const CoffeeShopContractABI = require('../../build/contracts/CoffeeShop.json').abi;
+const CoffeeShopContractABI = require('../contracts/CoffeeShop.json').abi;
 const coffeeShopContractAddress = process.env.COFFEE_SHOP_CONTRACT_ADDRESS;
 const coffeeShopContract = new web3.eth.Contract(CoffeeShopContractABI, coffeeShopContractAddress);
 
